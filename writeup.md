@@ -69,15 +69,15 @@ The curvature radius can be found by using the curvature equation from second de
 
 Let's say that following are scales to translate to world coordinates
 
-    ym_per_pix = 30/720 # meters per pixel in y dimension
-    xm_per_pix = 3.7/700 # meters per pixel in x dimension
+    ym_per_pix = 30.0/720  # meters per pixel in y dimension
+    xm_per_pix = 3.7/700   # meters per pixel in x dimension
 
-So, if (X, Y) is the world coordinates that correspond to (x, y) in pixel space, then
+So, if (X, Y) are the world coordinates that correspond to (x, y) in pixel space, then
 
     X = xm_per_pix * x
     Y = ym_per_pix * y
 
-Now, y is fitted as polynomial of second degree.
+Now, x is fitted as polynomial of second degree of y.
 
     x = A * y * y + B * y + C
 
@@ -86,9 +86,11 @@ After replacing x and y in the above equation with world coordinates, we have th
     X = xm_per_pix / (ym_per_pix * ym_per_pix) * A * Y * Y + xm_per_pix / ym_per_pix * B * Y + xm_per_pix * C
       = A' * Y * Y + B' * Y + C'
 
-where A' = xm_per_pix / (ym_per_pix * ym_per_pix) * A,
-      B' = xm_per_pix / ym_per_pix * B
-      C' = xm_per_pix * C
+where 
+
+    A' = xm_per_pix / (ym_per_pix * ym_per_pix) * A,
+    B' = xm_per_pix / ym_per_pix * B,  
+    C' = xm_per_pix * C
 
 Thus, polynomial coefficients can be scaled using the above scaling to translate to world coordinates. These new polynomial coefficients can be used to measure lane curvature radii in meters. These are also useful to measure drift of the car from the center of the lane.
 
@@ -97,5 +99,12 @@ Thus, polynomial coefficients can be scaled using the above scaling to translate
 Finally, an image is constructed in birds-eye view to draw left and right lanes by following polynomial fits. This lane image is transformed back to original image space by doing inverse of perspective transformation. The transformed lane image is added to the original image to project lane detections.
 
 ## Video output
+
+The above lane finding pipeline is applied to project video. As suggested in lecture notes, it's not necessary to find lanes from scratch in every frame. From one frame to next frame, locations of lanes change very little. So, lanes detected from previous frames can give useful guidence to detect lanes in current frame rather quickly. This optimization is adopted for detecting lanes in video. Basically, instead of histogramming binary image in birds-eye video to position windows for lane search and sliding windows from bottom to top to capture non-zero pixels for lanes, polynomials from previous frame are used to narrow down the binary image regions in order to gather these non-zero pixels along the left and right lanes. Specifically, bands of N pixels along y-axis are formed around polynomials from previous frame and non-zero pixels are captured in these bands in the current frame. These non-zero pixels are further fitted with second degree polynomials for the current frame to approximate the lanes in birds eye view.
+
+## Files submitted
+* Advanced_Lane_Lines.ipynb : ipython notebook for lane detection implementation
+* output_images/result?.jpg : lane-annotated outputs for test images
+* project_video_w_lanes.mp4 : project video output with projected lanes
 
 ## Discussions
